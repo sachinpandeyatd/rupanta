@@ -25,7 +25,8 @@ public class ImageJobServiceImpl implements ImageJobService{
 	private final ImageJobRepository imageJobRepository;
 	private final UserRepository userRepository;
 	private final S3StorageService s3StorageService;
-	private final ImageProcessingWorker imageProcessingWorker;
+//	private final ImageProcessingWorker imageProcessingWorker;
+	private final JobEventPublisher jobEventPublisher;
 	private final ObjectMapper objectMapper;
 
 	private static final String RAW_UPLOADS_FOLDER = "raw_uploads";
@@ -47,9 +48,9 @@ public class ImageJobServiceImpl implements ImageJobService{
 		newJob.setRawFileKey(rawFileKey);
 		newJob.setJobParameters(paramsJson);
 		newJob.setStatus(JobStatus.PENDING);
-
 		ImageJob savedJob = imageJobRepository.save(newJob);
-		imageProcessingWorker.processImageJob(savedJob.getId());
+//		imageProcessingWorker.processImageJob(savedJob.getId());
+		jobEventPublisher.publishJobCreatedEvent(savedJob.getId());
 
 		return savedJob.getId();
 	}
@@ -59,10 +60,15 @@ public class ImageJobServiceImpl implements ImageJobService{
 		ImageJob job = imageJobRepository.findById(jobId)
 				.orElseThrow(() -> new EntityNotFoundException("Job not found with ID: " + jobId));
 
+		String downloadUrl = null;
+
+		if (job.getStatus() == JobStatus.COMPLETED){
+			downloadUrl = s3StorageService.generatedPresignedUrl(job.getProcessedFileKey());
+		}
 		return JobStatusResponse.builder()
 				.jobId(jobId)
 				.status(job.getStatus())
-				.downloadUrl(null)
+				.downloadUrl(downloadUrl)
 				.build();
 	}
 
