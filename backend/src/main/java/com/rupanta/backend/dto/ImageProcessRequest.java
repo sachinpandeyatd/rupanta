@@ -11,6 +11,8 @@ public class ImageProcessRequest {
 	private ResizeParams resize;
 	private CropParams crop;
 
+	private CompressionParams compression;
+
 	@Data
 	public static class ResizeParams{
 		private Integer width;
@@ -26,5 +28,14 @@ public class ImageProcessRequest {
 		private int y;
 		private int width;
 		private int height;
+	}
+
+	@Data
+	public static class CompressionParams {
+		private Integer quality;
+
+		private Double minSize;
+		private Double maxSize;
+		private String unit;
 	}
 }
